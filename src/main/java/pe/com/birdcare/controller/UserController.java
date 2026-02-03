@@ -1,11 +1,14 @@
 package pe.com.birdcare.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pe.com.birdcare.dto.UserRequestDTO;
 import pe.com.birdcare.dto.UserResponseDTO;
 import pe.com.birdcare.service.IUserService;
 
@@ -37,5 +40,10 @@ public class UserController {
             @RequestParam String name,
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(userService.findByName(pageable, name));
+    }
+
+    @PostMapping
+    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserRequestDTO request) {
+        return new ResponseEntity<>(userService.add(request),HttpStatus.CREATED);
     }
 }
