@@ -57,12 +57,23 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Override
     public void delete(Long id) {
+        Category existente = categoryRepository.findById(id).orElseThrow(RuntimeException::new);
 
+        if(existente.getActive()){
+            existente.setActive(false);
+            categoryRepository.save(existente);
+        }
     }
 
     @Override
     public CategoryResponseDTO enable(Long id) {
-        return null;
+        Category existente = categoryRepository.findById(id).orElseThrow(RuntimeException::new);
+
+        if(!existente.getActive()){
+            existente.setActive(true);
+            categoryRepository.save(existente);
+        }
+        return toDTO(existente);
     }
 
     private CategoryResponseDTO toDTO(Category category){
