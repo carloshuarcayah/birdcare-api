@@ -22,4 +22,10 @@ public class UserController {
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(userService.findAll(pageable));
     }
+
+    @GetMapping("/active")
+    public ResponseEntity<Page<UserResponseDTO>> getJustActives(
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(userService.findJustActives(pageable));
+    }
 }
