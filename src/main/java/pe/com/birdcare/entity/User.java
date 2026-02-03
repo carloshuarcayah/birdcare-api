@@ -2,10 +2,7 @@ package pe.com.birdcare.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import pe.com.birdcare.enums.Role;
 
 import java.io.Serializable;
@@ -17,6 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +46,7 @@ public class User implements Serializable {
     private Role role;
 
     @Column(nullable = false)
+    @Builder.Default
     @NotNull
     private Boolean active = true;
 
