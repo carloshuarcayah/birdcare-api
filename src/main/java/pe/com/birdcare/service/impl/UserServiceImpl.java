@@ -48,7 +48,7 @@ public class UserServiceImpl implements IUserService {
                 .role(obj.role())
                 .build();
 
-        return null;
+        return toDTO(userRepository.save(user));
     }
 
     @Override
