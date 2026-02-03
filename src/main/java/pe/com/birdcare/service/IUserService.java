@@ -14,4 +14,5 @@ public interface IUserService {
     UserResponseDTO add(UserRequestDTO obj);
     UserResponseDTO update(UserRequestDTO obj, Long id);
     void delete(Long id);
+    void enable(Long id);
 }
