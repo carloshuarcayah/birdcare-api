@@ -53,7 +53,16 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponseDTO update(UserRequestDTO obj, Long id) {
-        return null;
+        User encontrado = userRepository.findById(id)
+                .orElseThrow(RuntimeException::new);
+
+        encontrado.setName(obj.name());
+        encontrado.setLastName(obj.lastName());
+        encontrado.setEmail(obj.email());
+        encontrado.setPhone(obj.phone());
+        encontrado.setRole(obj.role());
+
+        return toDTO(userRepository.save(encontrado));
     }
 
     @Override
