@@ -79,7 +79,7 @@ public class CategoryServiceImpl implements ICategoryService {
     private CategoryResponseDTO toDTO(Category category){
         return CategoryResponseDTO.builder()
                 .id(category.getId())
-                .nombre(category.getName())
+                .name(category.getName())
                 .description(category.getDescription())
                 .active(category.getActive()).build();
     }

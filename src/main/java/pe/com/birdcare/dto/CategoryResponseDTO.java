@@ -5,7 +5,7 @@ import lombok.Builder;
 @Builder
 public record CategoryResponseDTO(
         Long id,
-        String nombre,
+        String name,
         String description,
         Boolean active
 ) {
