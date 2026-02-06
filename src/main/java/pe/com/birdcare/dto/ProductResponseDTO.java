@@ -1,7 +1,10 @@
 package pe.com.birdcare.dto;
 
+import lombok.Builder;
+
 import java.math.BigDecimal;
 
+@Builder
 public record ProductResponseDTO(
         Long id,
         String name,
