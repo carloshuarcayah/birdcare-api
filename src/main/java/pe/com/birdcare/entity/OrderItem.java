@@ -3,12 +3,16 @@ package pe.com.birdcare.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.*;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
+@Builder
+@AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
 public class OrderItem implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
