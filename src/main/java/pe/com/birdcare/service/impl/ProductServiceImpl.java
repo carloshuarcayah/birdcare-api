@@ -8,6 +8,7 @@ import pe.com.birdcare.dto.ProductRequestDTO;
 import pe.com.birdcare.dto.ProductResponseDTO;
 import pe.com.birdcare.entity.Category;
 import pe.com.birdcare.entity.Product;
+import pe.com.birdcare.mapper.ProductMapper;
 import pe.com.birdcare.repository.CategoryRepository;
 import pe.com.birdcare.repository.ProductRepository;
 import pe.com.birdcare.service.IProductService;
@@ -18,60 +19,54 @@ public class ProductServiceImpl implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+    private final ProductMapper pm;
+
     @Override
     public Page<ProductResponseDTO> findAll(Pageable pageable) {
-        return productRepository.findAll(pageable).map(this::toDTO);
+        return productRepository.findAll(pageable).map(pm::toResponse);
     }
 
     @Override
     public Page<ProductResponseDTO> findActives(Pageable pageable) {
-        return productRepository.findAllByActiveTrue(pageable).map(this::toDTO);
+        return productRepository.findAllByActiveTrue(pageable).map(pm::toResponse);
     }
 
     @Override
     public ProductResponseDTO findById(Long id) {
-        return productRepository.findById(id).map(this::toDTO).orElseThrow(()->new RuntimeException("Product not found with id: "+id));
+        return productRepository.findById(id).map(pm::toResponse).orElseThrow(()->new RuntimeException("Product not found with id: "+id));
     }
 
     @Override
     public Page<ProductResponseDTO> findByName(String name, Pageable pageable) {
-        return productRepository.findAllByNameContainingIgnoreCase(name,pageable).map(this::toDTO);
+        return productRepository.findAllByNameContainingIgnoreCase(name,pageable).map(pm::toResponse);
     }
 
     @Override
     public Page<ProductResponseDTO> findByCategory(Long categoryId, Pageable pageable) {
-        return productRepository.findAllByCategoryId(categoryId, pageable).map(this::toDTO);
+        return productRepository.findAllByCategoryId(categoryId, pageable).map(pm::toResponse);
     }
 
     @Override
     public ProductResponseDTO create(ProductRequestDTO req) {
-        Category category = getCategoryOrThrow(req.categoryId());
+        Category existingCategory = getCategoryOrThrow(req.categoryId());
 
-        Product product = Product.builder()
-                .name(req.name())
-                .description(req.description())
-                .price(req.price())
-                .stock(req.stock())
-                .category(category)
-                .active(true)
-                .build();
+        Product product = pm.toEntity(req);
 
-        return toDTO(productRepository.save(product));
+        product.setCategory(existingCategory);
+
+        return pm.toResponse(productRepository.save(product));
     }
 
     @Override
     public ProductResponseDTO update(Long id, ProductRequestDTO req) {
-        Product existing = getProductOrThrow(id);
+        Product existingProduct = getProductOrThrow(id);
+        pm.updateProduct(req,existingProduct);
 
-        Category category = getCategoryOrThrow(req.categoryId());
+        Category existingCategory= getCategoryOrThrow(req.categoryId());
 
-        existing.setName(req.name());
-        existing.setDescription(req.description());
-        existing.setPrice(req.price());
-        existing.setStock(req.stock());
-        existing.setCategory(category);
+        existingProduct.setCategory(existingCategory);
 
-        return toDTO(productRepository.save(existing));
+        return pm.toResponse(productRepository.save(existingProduct));
     }
 
     @Override
@@ -86,7 +81,7 @@ public class ProductServiceImpl implements IProductService {
         Product product = getProductOrThrow(id);
         product.setActive(true);
 
-        return toDTO(productRepository.save(product));
+        return pm.toResponse(productRepository.save(product));
     }
 
     private Category getCategoryOrThrow(Long id){
@@ -96,17 +91,5 @@ public class ProductServiceImpl implements IProductService {
     private Product getProductOrThrow(Long id){
         return productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
-    }
-
-    private ProductResponseDTO toDTO(Product product) {
-        return ProductResponseDTO.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .stock(product.getStock())
-                .active(product.getActive())
-                .categoryName(product.getCategory().getName())
-                .build();
     }
 }
