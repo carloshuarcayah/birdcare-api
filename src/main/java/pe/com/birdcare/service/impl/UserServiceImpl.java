@@ -3,6 +3,7 @@ package pe.com.birdcare.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.com.birdcare.dto.UserRequestDTO;
@@ -18,7 +19,7 @@ import pe.com.birdcare.service.IUserService;
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Page<UserResponseDTO> findAll(Pageable pageable) {
@@ -47,7 +48,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserResponseDTO add(UserRequestDTO obj) {
         User user = userMapper.fromRequestToEntity(obj);
-        String encryptedPassword = "Encrypted_"+obj.password();
+        String encryptedPassword = passwordEncoder.encode(obj.password());
         user.setPassword(encryptedPassword);
 
         return userMapper.toResponseDTO(userRepository.save(user));
