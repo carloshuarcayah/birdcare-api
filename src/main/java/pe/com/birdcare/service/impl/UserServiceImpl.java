@@ -12,6 +12,7 @@ import pe.com.birdcare.dto.UserCreateDTO;
 import pe.com.birdcare.dto.UserResponseDTO;
 import pe.com.birdcare.dto.UserUpdateDTO;
 import pe.com.birdcare.entity.User;
+import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.UserMapper;
 import pe.com.birdcare.repository.UserRepository;
 import pe.com.birdcare.service.IUserService;
@@ -36,8 +37,9 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponseDTO findById(Long id) {
-        return userRepository.findById(id).map(userMapper::response)
-                .orElseThrow(RuntimeException::new);
+        User existingUser = getUserOrThrow(id);
+
+        return userMapper.response(existingUser);
     }
 
     @Override
@@ -60,8 +62,7 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @Override
     public UserResponseDTO update(UserUpdateDTO obj, Long id) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(RuntimeException::new);
+        User existingUser = getUserOrThrow(id);
 
         //password do not change
         userMapper.updateUser(obj,existingUser);
@@ -72,29 +73,23 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @Override
     public void delete(Long id) {
-        User existingUser = userRepository.findById(id).orElseThrow(RuntimeException::new);
-
-        if(existingUser.getActive()){
-            existingUser.setActive(false);
-            userRepository.save(existingUser);
-        }
+        User existingUser = getUserOrThrow(id);
+        existingUser.setActive(false);
+        userRepository.save(existingUser);
     }
 
     @Transactional
     @Override
     public void enable(Long id) {
-        User existingUser = userRepository.findById(id).orElseThrow(RuntimeException::new);
-
-        if(!existingUser.getActive()){
-            existingUser.setActive(true);
-            userRepository.save(existingUser);
-        }
+        User existingUser = getUserOrThrow(id);
+        existingUser.setActive(true);
+        userRepository.save(existingUser);
     }
 
     @Transactional
     @Override
     public void changePassword(Long id, UserPasswordChangeDTO req) {
-        User existingUser = userRepository.findById(id).orElseThrow(RuntimeException::new);
+        User existingUser = getUserOrThrow(id);
 
         if(!passwordEncoder.matches(req.oldPassword(), existingUser.getPassword()))
             throw new BadCredentialsException("Invalid credentials");
@@ -104,5 +99,10 @@ public class UserServiceImpl implements IUserService {
         existingUser.setPassword(encodedPassword);
 
         userRepository.save(existingUser);
+    }
+
+    private User getUserOrThrow(Long id){
+        return userRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("User not found with id: "+id));
     }
 }

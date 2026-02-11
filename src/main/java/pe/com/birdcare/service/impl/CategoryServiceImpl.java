@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.com.birdcare.dto.CategoryRequestDTO;
 import pe.com.birdcare.dto.CategoryResponseDTO;
 import pe.com.birdcare.entity.Category;
+import pe.com.birdcare.exception.ConflictException;
+import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.CategoryMapper;
 import pe.com.birdcare.repository.CategoryRepository;
 import pe.com.birdcare.service.ICategoryService;
@@ -44,7 +46,7 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     public CategoryResponseDTO create(CategoryRequestDTO req) {
         if (categoryRepository.existsByName(req.name())){
-            throw new RuntimeException("Category with the name '" + req.name() + "' already exists.");
+            throw new ConflictException("Category with the name '" + req.name() + "' already exists.");
         }
         return mapper.toResponse(categoryRepository.save(mapper.toEntity(req)));
     }
@@ -56,7 +58,7 @@ public class CategoryServiceImpl implements ICategoryService {
         Category existingCategory = getCategoryOrThrow(id);
 
         if (categoryRepository.existsByNameAndIdNot(req.name(), id)) {
-            throw new RuntimeException("This name is already used by another category");
+            throw new ConflictException("This name is already used by another category");
         }
 
         mapper.updateCategory(req,existingCategory);
@@ -84,6 +86,6 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     private Category getCategoryOrThrow(Long id){
-        return categoryRepository.findById(id).orElseThrow(RuntimeException::new);
+        return categoryRepository.findById(id) .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
     }
 }

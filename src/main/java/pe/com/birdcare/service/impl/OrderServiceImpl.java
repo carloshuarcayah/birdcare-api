@@ -12,6 +12,8 @@ import pe.com.birdcare.entity.OrderItem;
 import pe.com.birdcare.entity.Product;
 import pe.com.birdcare.entity.User;
 import pe.com.birdcare.enums.OrderStatus;
+import pe.com.birdcare.exception.BadRequestException;
+import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.OrderMapper;
 import pe.com.birdcare.repository.OrderRepository;
 import pe.com.birdcare.repository.ProductRepository;
@@ -55,7 +57,7 @@ public class OrderServiceImpl implements IOrderService {
                     Product product = getProductOrThrow(itemDTO.productId());
 
                     if (product.getStock() < itemDTO.quantity()) {
-                        throw new RuntimeException("Not enough stock for: " + product.getName());
+                        throw new BadRequestException("Not enough stock for: " + product.getName());
                     }
 
                     product.setStock(product.getStock() - itemDTO.quantity());
@@ -82,7 +84,7 @@ public class OrderServiceImpl implements IOrderService {
         Order order = getOrderOrThrow(orderId);
 
         if (order.getStatus() == OrderStatus.DELIVERED && orderStatus == OrderStatus.CANCELLED) {
-            throw new RuntimeException("Cannot cancel an order that has already been delivered.");
+            throw new BadRequestException("Cannot cancel an order that has already been delivered.");
         }
 
         order.setStatus(orderStatus);
@@ -98,15 +100,15 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     private Product getProductOrThrow(Long id){
-        return productRepository.findById(id).orElseThrow(()->new RuntimeException("Product not found with ID: "+id));
+        return productRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Product not found with ID: "+id));
     }
 
     private User getUserOrThrow(Long id){
-        return userRepository.findById(id).orElseThrow(()->new RuntimeException("User not found with ID: "+id));
+        return userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User not found with ID: "+id));
     }
 
     private Order getOrderOrThrow(Long id){
-        return orderRepository.findById(id).orElseThrow(()->new RuntimeException("Order not found with id: "+id));
+        return orderRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Order not found with id: "+id));
     }
 
     private BigDecimal getSubtotal(BigDecimal price, Integer quantity){

@@ -9,6 +9,7 @@ import pe.com.birdcare.dto.ProductRequestDTO;
 import pe.com.birdcare.dto.ProductResponseDTO;
 import pe.com.birdcare.entity.Category;
 import pe.com.birdcare.entity.Product;
+import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.ProductMapper;
 import pe.com.birdcare.repository.CategoryRepository;
 import pe.com.birdcare.repository.ProductRepository;
@@ -35,7 +36,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public ProductResponseDTO findById(Long id) {
-        return productRepository.findById(id).map(pm::toResponse).orElseThrow(()->new RuntimeException("Product not found with id: "+id));
+        return productRepository.findById(id).map(pm::toResponse).orElseThrow(()->new ResourceNotFoundException("Product not found with id: "+id));
     }
 
     @Override
@@ -92,10 +93,10 @@ public class ProductServiceImpl implements IProductService {
 
     private Category getCategoryOrThrow(Long id){
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
     }
     private Product getProductOrThrow(Long id){
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
     }
 }
