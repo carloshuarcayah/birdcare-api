@@ -3,6 +3,8 @@ package pe.com.birdcare.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.com.birdcare.dto.OrderRequestDTO;
@@ -43,6 +45,18 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findByUserId(userId,pageable).map(mapper::toResponse);
     }
 
+    //AUTHENTICATED USERS
+    @Override
+    public Page<OrderResponseDTO> findMyOrders(Pageable pageable) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String email = auth.getName();
+
+        User existingUser=userRepository.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email. "+email));
+
+        return orderRepository.findByUserId(existingUser.getId(), pageable).map(mapper::toResponse);
+    }
+
     @Transactional
     @Override
     public OrderResponseDTO create(OrderRequestDTO req) {
@@ -80,7 +94,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Transactional
     @Override
-    public OrderResponseDTO update(Long orderId, OrderStatus orderStatus) {
+    public OrderResponseDTO updateStatus(Long orderId, OrderStatus orderStatus) {
         Order order = getOrderOrThrow(orderId);
 
         if (order.getStatus() == OrderStatus.DELIVERED && orderStatus == OrderStatus.CANCELLED) {

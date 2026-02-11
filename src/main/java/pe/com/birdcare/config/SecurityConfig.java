@@ -24,11 +24,18 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(
                 (request) -> request
-                        .requestMatchers(HttpMethod.GET,"/api/products/**","/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/users").permitAll()
-                        .requestMatchers("/api/products/**","/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**","/api/orders/user/**").authenticated()
                         .requestMatchers("/error", "/h2-console/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/my-orders").authenticated()
+
+                        .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated());
 
         http.formLogin(AbstractHttpConfigurer::disable);

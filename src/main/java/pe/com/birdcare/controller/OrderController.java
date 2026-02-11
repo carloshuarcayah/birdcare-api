@@ -18,15 +18,14 @@ import pe.com.birdcare.service.IOrderService;
 public class OrderController {
     private final IOrderService orderService;
 
-    @PostMapping
-    public ResponseEntity<OrderResponseDTO> create(@Valid @RequestBody OrderRequestDTO req) {
-        OrderResponseDTO response = orderService.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.findById(id));
+    }
+
+    @GetMapping("/my-orders")
+    public ResponseEntity<Page<OrderResponseDTO>> myOrders(Pageable pageable) {
+        return ResponseEntity.ok(orderService.findMyOrders(pageable));
     }
 
     @GetMapping("/user/{userId}")
@@ -36,10 +35,16 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findByUserId(userId, pageable));
     }
 
+    @PostMapping
+    public ResponseEntity<OrderResponseDTO> create(@Valid @RequestBody OrderRequestDTO req) {
+        OrderResponseDTO response = orderService.create(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<OrderResponseDTO> updateStatus(
             @PathVariable Long id,
             @RequestParam OrderStatus status) {
-        return ResponseEntity.ok(orderService.update(id, status));
+        return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 }
