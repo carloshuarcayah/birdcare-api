@@ -41,9 +41,11 @@ public class User implements Serializable {
     @Column(nullable = true,length = 15)
     private String phone;
 
+    //USER ROL IS DETERMINATE FOR THE
     @Enumerated(EnumType.STRING)
     @Column(length = 20,nullable = false)
-    private Role role;
+    @Builder.Default
+    private Role role=Role.CUSTOMER;
 
     @Column(nullable = false)
     @Builder.Default
