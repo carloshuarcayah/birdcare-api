@@ -71,7 +71,7 @@ public class UserController {
 
     @PatchMapping("/{id}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(@PathVariable Long id, @RequestBody UserPasswordChangeDTO req) {
+    public void changePassword(@PathVariable Long id, @Valid @RequestBody UserPasswordChangeDTO req) {
         userService.changePassword(id, req);
     }
 }
