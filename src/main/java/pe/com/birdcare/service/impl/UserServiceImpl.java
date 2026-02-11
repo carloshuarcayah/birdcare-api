@@ -7,10 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.com.birdcare.dto.UserPasswordChangeDTO;
-import pe.com.birdcare.dto.UserCreateDTO;
-import pe.com.birdcare.dto.UserResponseDTO;
-import pe.com.birdcare.dto.UserUpdateDTO;
+import pe.com.birdcare.dto.*;
 import pe.com.birdcare.entity.User;
 import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.UserMapper;
@@ -31,7 +28,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Page<UserResponseDTO> findJustActives(Pageable pageable) {
+    public Page<UserResponseDTO> findActiveUsers(Pageable pageable) {
         return userRepository.findAllByActiveTrue(pageable).map(userMapper::response);
     }
 
@@ -40,6 +37,12 @@ public class UserServiceImpl implements IUserService {
         User existingUser = getUserOrThrow(id);
 
         return userMapper.response(existingUser);
+    }
+
+    @Override
+    public UserResponseDTO findMe(String email) {
+        User user = getUserByEmailOrThrow(email);
+        return userMapper.response(user);
     }
 
     @Override
@@ -61,18 +64,15 @@ public class UserServiceImpl implements IUserService {
 
     @Transactional
     @Override
-    public UserResponseDTO update(UserUpdateDTO obj, Long id) {
-        User existingUser = getUserOrThrow(id);
-
-        //password do not change
+    public UserResponseDTO update(UserUpdateDTO obj, String email) {
+        User existingUser = getUserByEmailOrThrow(email);
         userMapper.updateUser(obj,existingUser);
-
         return userMapper.response(userRepository.save(existingUser));
     }
 
     @Transactional
     @Override
-    public void delete(Long id) {
+    public void disable(Long id) {
         User existingUser = getUserOrThrow(id);
         existingUser.setActive(false);
         userRepository.save(existingUser);
@@ -86,10 +86,24 @@ public class UserServiceImpl implements IUserService {
         userRepository.save(existingUser);
     }
 
+    //ADMIN
     @Transactional
     @Override
-    public void changePassword(Long id, UserPasswordChangeDTO req) {
+    public void resetPassword(Long id, AdminPasswordResetDTO req) {
         User existingUser = getUserOrThrow(id);
+
+        String encodedPassword = passwordEncoder.encode(req.newPassword());
+
+        existingUser.setPassword(encodedPassword);
+
+        userRepository.save(existingUser);
+    }
+
+    //user
+    @Transactional
+    @Override
+    public void changePassword(String email, UserPasswordChangeDTO req) {
+        User existingUser = getUserByEmailOrThrow(email);
 
         if(!passwordEncoder.matches(req.oldPassword(), existingUser.getPassword()))
             throw new BadCredentialsException("Invalid credentials");
@@ -104,5 +118,9 @@ public class UserServiceImpl implements IUserService {
     private User getUserOrThrow(Long id){
         return userRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("User not found with id: "+id));
+    }
+
+    private User getUserByEmailOrThrow(String email){
+        return  userRepository.getUserByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email: "+email));
     }
 }
