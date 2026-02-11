@@ -2,7 +2,15 @@ package pe.com.birdcare.dto;
 import jakarta.validation.constraints.*;
 import pe.com.birdcare.enums.Role;
 
-public record UserRequestDTO(
+//id - IS AUTOGENERATE
+//email - NOT NULL
+//pasword - NOT NULL
+//name - NOT NULL
+//last name - NOT NULL
+//phone - NULLABLE
+//role - HAS A DEFAULT CUSTOMER - JUST THE ADMIN WILL HAVE THE OPTION OF MODIFIDE THE ROL
+//active - HAS A DEFAULT TRUE
+public record UserCreateDTO(
         @NotBlank(message = "email is required")
         @Email(message = "email must be valid")
         String email,
@@ -17,8 +25,7 @@ public record UserRequestDTO(
         @NotBlank(message = "lastname is required")
         String lastName,
 
-        @Size(max = 15) String phone,
-
-        @NotNull Role role
+        @Size(max = 15)
+        String phone
 ){
 }
