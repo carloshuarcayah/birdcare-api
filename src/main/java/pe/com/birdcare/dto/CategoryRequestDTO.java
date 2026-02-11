@@ -1,10 +1,10 @@
 package pe.com.birdcare.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
+import jakarta.validation.constraints.Size;
 
 public record CategoryRequestDTO(
-        @NotBlank String name,
+        @NotBlank @Size(max = 100) String name,
         @NotBlank String description
 ) {
 }
