@@ -121,6 +121,6 @@ public class UserServiceImpl implements IUserService {
     }
 
     private User getUserByEmailOrThrow(String email){
-        return  userRepository.getUserByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email: "+email));
+        return  userRepository.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email: "+email));
     }
 }
