@@ -25,7 +25,7 @@ public class CategoryController {
 
     @GetMapping("/active")
     public ResponseEntity<Page<CategoryResponseDTO>> getActives(Pageable pageable) {
-        return ResponseEntity.ok(categoryService.findActives(pageable));
+        return ResponseEntity.ok(categoryService.findActiveCategories(pageable));
     }
 
     @GetMapping("/{id}")
