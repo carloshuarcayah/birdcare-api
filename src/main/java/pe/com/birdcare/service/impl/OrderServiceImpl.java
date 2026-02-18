@@ -7,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.com.birdcare.dto.AdminOrderRequestDTO;
+import pe.com.birdcare.dto.OrderItemRequestDTO;
 import pe.com.birdcare.dto.OrderRequestDTO;
 import pe.com.birdcare.dto.OrderResponseDTO;
 import pe.com.birdcare.entity.Order;
@@ -59,37 +61,22 @@ public class OrderServiceImpl implements IOrderService {
 
     @Transactional
     @Override
-    public OrderResponseDTO create(OrderRequestDTO req) {
+    public OrderResponseDTO createOrder(AdminOrderRequestDTO req) {
         User existingUser = getUserOrThrow(req.userId());
+        Order newOrder = mapper.toEntity(req);
+        newOrder.setUser(existingUser);
+        return mapper.toResponse(prepareOrderAndSave(newOrder,req.items()));
+    }
 
+    @Transactional
+    @Override
+    public OrderResponseDTO createMyOrder(OrderRequestDTO req) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User existingUser = userRepository.findByEmail(auth.getName()).orElseThrow(()->new ResourceNotFoundException("User not found"));
         Order newOrder = mapper.toEntity(req);
         newOrder.setUser(existingUser);
 
-        //LOGIC FOR
-        List<OrderItem> orderItems = req.items().stream().map(
-                itemDTO->{
-                    Product product = getProductOrThrow(itemDTO.productId());
-
-                    if (product.getStock() < itemDTO.quantity()) {
-                        throw new BadRequestException("Not enough stock for: " + product.getName());
-                    }
-
-                    product.setStock(product.getStock() - itemDTO.quantity());
-
-                    return OrderItem.builder()
-                            .order(newOrder)
-                            .product(product)
-                            .quantity(itemDTO.quantity())
-                            .price(product.getPrice()).build();
-                }).toList();
-
-        newOrder.setItems(orderItems);
-
-        BigDecimal total = orderItems.stream().map(item->getSubtotal(item.getPrice(), item.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add);
-
-        newOrder.setTotal(total);
-
-        return mapper.toResponse(orderRepository.save(newOrder));
+        return mapper.toResponse(prepareOrderAndSave(newOrder, req.items()));
     }
 
     @Transactional
@@ -127,5 +114,34 @@ public class OrderServiceImpl implements IOrderService {
 
     private BigDecimal getSubtotal(BigDecimal price, Integer quantity){
         return price.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    private Order prepareOrderAndSave(Order order, List<OrderItemRequestDTO> req){
+
+        //LOGIC FOR
+        List<OrderItem> orderItems = req.stream().map(
+                itemDTO->{
+                    Product product = getProductOrThrow(itemDTO.productId());
+
+                    if (product.getStock() < itemDTO.quantity()) {
+                        throw new BadRequestException("Not enough stock for: " + product.getName());
+                    }
+
+                    product.setStock(product.getStock() - itemDTO.quantity());
+
+                    return OrderItem.builder()
+                            .order(order)
+                            .product(product)
+                            .quantity(itemDTO.quantity())
+                            .price(product.getPrice()).build();
+                }).toList();
+
+        order.setItems(orderItems);
+
+        BigDecimal total = orderItems.stream().map(item->getSubtotal(item.getPrice(), item.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add);
+
+        order.setTotal(total);
+
+        return orderRepository.save(order);
     }
 }
