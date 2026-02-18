@@ -2,6 +2,7 @@ package pe.com.birdcare.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import pe.com.birdcare.dto.AdminOrderRequestDTO;
 import pe.com.birdcare.dto.OrderItemResponseDTO;
 import pe.com.birdcare.dto.OrderRequestDTO;
 import pe.com.birdcare.dto.OrderResponseDTO;
@@ -17,6 +18,12 @@ public class OrderMapper {
 
     //create REQ->ENT
     public  Order toEntity(OrderRequestDTO req){
+        return Order.builder()
+                .shippingAddress(req.shippingAddress())
+                .build();
+    }
+
+    public  Order toEntity(AdminOrderRequestDTO req){
         return Order.builder()
                 .shippingAddress(req.shippingAddress())
                 .build();
