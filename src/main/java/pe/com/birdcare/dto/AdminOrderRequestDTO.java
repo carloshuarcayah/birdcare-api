@@ -7,7 +7,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record OrderRequestDTO(
+public record AdminOrderRequestDTO(
+        @NotNull(message = "User ID is required")
+        Long userId,
 
         @NotBlank(message = "Shipping address is required")
         String shippingAddress,
