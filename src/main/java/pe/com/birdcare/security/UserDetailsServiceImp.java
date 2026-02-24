@@ -1,6 +1,5 @@
 package pe.com.birdcare.security;
 
-
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +11,7 @@ import pe.com.birdcare.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
-public class UserDetailsServiceImp implements UserDetailsService {
+public class  UserDetailsServiceImp implements UserDetailsService {
 
     private final UserRepository userRepository;
 

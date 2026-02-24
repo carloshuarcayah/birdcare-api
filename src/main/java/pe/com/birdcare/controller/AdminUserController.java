@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.com.birdcare.dto.AdminPasswordResetDTO;
+import pe.com.birdcare.dto.UserCreateDTO;
 import pe.com.birdcare.dto.UserResponseDTO;
 import pe.com.birdcare.service.IUserService;
 
@@ -17,6 +18,7 @@ import pe.com.birdcare.service.IUserService;
 @RequiredArgsConstructor
 public class AdminUserController {
     private final IUserService userService;
+
 
     @GetMapping
     public ResponseEntity<Page<UserResponseDTO>> findAll(
@@ -28,6 +30,11 @@ public class AdminUserController {
     public ResponseEntity<Page<UserResponseDTO>> findActiveUsers(
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(userService.findActiveUsers(pageable));
+    }
+
+    @PostMapping
+    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserCreateDTO req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(req));
     }
 
     //ADMIN

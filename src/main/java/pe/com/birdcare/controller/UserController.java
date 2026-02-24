@@ -25,11 +25,6 @@ public class UserController {
         return ResponseEntity.ok(userService.findMe(auth.getUsername()));
     }
 
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserCreateDTO request) {
-        return new ResponseEntity<>(userService.create(request), HttpStatus.CREATED);
-    }
-
     //USER
     @PutMapping("/me")
     public ResponseEntity<UserResponseDTO> update(
