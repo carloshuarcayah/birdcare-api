@@ -1,15 +1,12 @@
 package pe.com.birdcare.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
 @Table(name = "categories")
-@Getter @Setter
-@Builder
-@AllArgsConstructor @NoArgsConstructor
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +18,35 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private Boolean active=true;
+    @Column(nullable = false,columnDefinition = "boolean default true")
+    private Boolean active;
+
+
+    public void enable(){
+        this.active=true;
+    }
+
+    public void disable(){
+        this.active=false;
+    }
+
+    public void update(String name, String description){
+        validateName(name);
+        this.name=name;
+        this.description=description;
+    }
+
+    public Category(String name, String description){
+        validateName(name);
+        this.name= name;
+        this.description=description;
+        this.active=true;
+    }
+
+    public void validateName(String name){
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Category name cannot be empty");
+        }
+    }
+
 }

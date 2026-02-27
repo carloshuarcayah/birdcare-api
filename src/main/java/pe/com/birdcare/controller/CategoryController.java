@@ -14,7 +14,6 @@ import pe.com.birdcare.service.ICategoryService;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
-
 public class CategoryController {
     private final ICategoryService categoryService;
 
@@ -40,7 +39,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponseDTO> create(@Valid @RequestBody CategoryRequestDTO req) {
-        return new ResponseEntity<>(categoryService.create(req), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.create(req));
     }
 
     @PutMapping("/{id}")
@@ -49,11 +48,11 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        categoryService.delete(id);
+    public ResponseEntity<CategoryResponseDTO> delete(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.delete(id));
     }
 
-    @PutMapping("/{id}/enable")
+    @PatchMapping("/{id}/enable")
     public ResponseEntity<CategoryResponseDTO> enable(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.enable(id));
     }

@@ -48,41 +48,41 @@ public class CategoryServiceImpl implements ICategoryService {
         if (categoryRepository.existsByName(req.name())){
             throw new ConflictException("Category with the name '" + req.name() + "' already exists.");
         }
-        return mapper.toResponse(categoryRepository.save(mapper.toEntity(req)));
+
+        Category category = new Category(req.name(), req.description());
+
+        return mapper.toResponse(categoryRepository.save(category));
     }
 
     @Transactional
     @Override
     public CategoryResponseDTO update(Long id, CategoryRequestDTO req) {
 
-        Category existingCategory = getCategoryOrThrow(id);
+        Category category = getCategoryOrThrow(id);
 
         if (categoryRepository.existsByNameAndIdNot(req.name(), id)) {
             throw new ConflictException("This name is already used by another category");
         }
 
-        mapper.updateCategory(req,existingCategory);
+        category.update(req.name(), req.description());
 
-        return mapper.toResponse(categoryRepository.save(existingCategory));
+        return mapper.toResponse(categoryRepository.save(category));
     }
 
     @Transactional
     @Override
-    public void delete(Long id) {
+    public CategoryResponseDTO delete(Long id) {
         Category existingCategory = getCategoryOrThrow(id);
-        existingCategory.setActive(false);
-        categoryRepository.save(existingCategory);
+        existingCategory.disable();
+        return mapper.toResponse(categoryRepository.save(existingCategory));
     }
 
     @Transactional
     @Override
     public CategoryResponseDTO enable(Long id) {
         Category existingCategory = getCategoryOrThrow(id);
-
-        existingCategory.setActive(true);
-        categoryRepository.save(existingCategory);
-
-        return mapper.toResponse(existingCategory);
+        existingCategory.enable();
+        return mapper.toResponse(categoryRepository.save(existingCategory));
     }
 
     private Category getCategoryOrThrow(Long id){
