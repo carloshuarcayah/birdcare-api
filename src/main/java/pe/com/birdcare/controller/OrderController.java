@@ -16,19 +16,18 @@ import pe.com.birdcare.enums.OrderStatus;
 import pe.com.birdcare.service.IOrderService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final IOrderService orderService;
 
-    @GetMapping("/orders/my-orders")
-    public ResponseEntity<Page<OrderResponseDTO>> myOrders(Pageable pageable) {
-        return ResponseEntity.ok(orderService.findMyOrders(pageable));
+    @GetMapping("/me")
+    public ResponseEntity<Page<OrderResponseDTO>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails, Pageable pageable) {
+        return ResponseEntity.ok(orderService.findMyOrders(userDetails.getUsername(), pageable));
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<OrderResponseDTO> create(@Valid @RequestBody OrderRequestDTO req) {
-        OrderResponseDTO response = orderService.createMyOrder(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<OrderResponseDTO> create(@AuthenticationPrincipal UserDetails userDetails,@Valid @RequestBody OrderRequestDTO req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createMyOrder(userDetails.getUsername(),req));
     }
 }

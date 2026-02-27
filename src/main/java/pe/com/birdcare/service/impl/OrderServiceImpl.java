@@ -3,7 +3,6 @@ package pe.com.birdcare.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +22,6 @@ import pe.com.birdcare.repository.OrderRepository;
 import pe.com.birdcare.repository.ProductRepository;
 import pe.com.birdcare.repository.UserRepository;
 import pe.com.birdcare.service.IOrderService;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -49,53 +46,66 @@ public class OrderServiceImpl implements IOrderService {
 
     //AUTHENTICATED USERS
     @Override
-    public Page<OrderResponseDTO> findMyOrders(Pageable pageable) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        String email = auth.getName();
-
-        User existingUser=userRepository.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email. "+email));
-
+    public Page<OrderResponseDTO> findMyOrders(String email,Pageable pageable) {
+        User existingUser=getUserByEmailOrThrow(email);
         return orderRepository.findByUserId(existingUser.getId(), pageable).map(mapper::toResponse);
     }
 
     @Transactional
     @Override
     public OrderResponseDTO createOrder(AdminOrderRequestDTO req) {
-        User existingUser = getUserOrThrow(req.userId());
-        Order newOrder = mapper.toEntity(req);
-        newOrder.setUser(existingUser);
-        return mapper.toResponse(prepareOrderAndSave(newOrder,req.items()));
+        User user = getUserOrThrow(req.userId());
+        return orderCreation(user,req.shippingAddress(),req.items());
     }
 
     @Transactional
     @Override
-    public OrderResponseDTO createMyOrder(OrderRequestDTO req) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User existingUser = userRepository.findByEmail(auth.getName()).orElseThrow(()->new ResourceNotFoundException("User not found"));
-        Order newOrder = mapper.toEntity(req);
-        newOrder.setUser(existingUser);
-
-        return mapper.toResponse(prepareOrderAndSave(newOrder, req.items()));
+    public OrderResponseDTO createMyOrder(String email, OrderRequestDTO req) {
+        User user = getUserByEmailOrThrow(email);
+        return orderCreation(user,req.shippingAddress(),req.items());
     }
 
     @Transactional
     @Override
-    public OrderResponseDTO updateStatus(Long orderId, OrderStatus orderStatus) {
+    public OrderResponseDTO updateStatus(Long orderId, OrderStatus newStatus) {
         Order order = getOrderOrThrow(orderId);
 
-        if (order.getStatus() == OrderStatus.DELIVERED && orderStatus == OrderStatus.CANCELLED) {
-            throw new BadRequestException("Cannot cancel an order that has already been delivered.");
+        if (newStatus == OrderStatus.CANCELLED) {
+            handleCancellation(order);
+        } else {
+            order.setStatus(newStatus);
         }
 
-        order.setStatus(orderStatus);
+        return mapper.toResponse(orderRepository.save(order));
+    }
 
-        if (orderStatus == OrderStatus.CANCELLED) {
-            order.getItems().forEach(item -> {
-                int currentStock = item.getProduct().getStock();
-                item.getProduct().setStock(currentStock + item.getQuantity());
-            });
+    private void handleCancellation(Order order) {
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new BadRequestException("Cannot cancel a delivered order.");
         }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.getItems().forEach(item -> {
+            Product p = item.getProduct();
+            p.setStock(p.getStock() + item.getQuantity());
+        });
+    }
+
+    private OrderResponseDTO orderCreation(User user, String address, List<OrderItemRequestDTO> itemsDto){
+
+        Order order = new Order(user,address);
+
+        itemsDto.forEach(dto->{
+            Product product = getProductOrThrow(dto.productId());
+            if (product.getStock() < dto.quantity()) {
+                throw new BadRequestException("Not enough stock for: " + product.getName());
+            }
+
+            product.setStock(product.getStock()-dto.quantity());
+
+            OrderItem item = new OrderItem(product,dto.quantity(),product.getPrice());
+            order.addItem(item);
+        });
 
         return mapper.toResponse(orderRepository.save(order));
     }
@@ -112,36 +122,8 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Order not found with id: "+id));
     }
 
-    private BigDecimal getSubtotal(BigDecimal price, Integer quantity){
-        return price.multiply(BigDecimal.valueOf(quantity));
+    private User getUserByEmailOrThrow(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found with email:"+email));
     }
 
-    private Order prepareOrderAndSave(Order order, List<OrderItemRequestDTO> req){
-
-        //LOGIC FOR
-        List<OrderItem> orderItems = req.stream().map(
-                itemDTO->{
-                    Product product = getProductOrThrow(itemDTO.productId());
-
-                    if (product.getStock() < itemDTO.quantity()) {
-                        throw new BadRequestException("Not enough stock for: " + product.getName());
-                    }
-
-                    product.setStock(product.getStock() - itemDTO.quantity());
-
-                    return OrderItem.builder()
-                            .order(order)
-                            .product(product)
-                            .quantity(itemDTO.quantity())
-                            .price(product.getPrice()).build();
-                }).toList();
-
-        order.setItems(orderItems);
-
-        BigDecimal total = orderItems.stream().map(item->getSubtotal(item.getPrice(), item.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add);
-
-        order.setTotal(total);
-
-        return orderRepository.save(order);
-    }
 }

@@ -15,15 +15,12 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
     @Column(nullable = false,unique = true,length = 100)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @NotNull
     @Column(nullable = false)
-    @Builder.Default
     private Boolean active=true;
 }
