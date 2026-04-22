@@ -85,10 +85,7 @@ public class OrderServiceImpl implements IOrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
-        order.getItems().forEach(item -> {
-            Product p = item.getProduct();
-            p.setStock(p.getStock() + item.getQuantity());
-        });
+        order.getItems().forEach(item -> item.getProduct().restoreStock(item.getQuantity()));
     }
 
     private OrderResponseDTO orderCreation(User user, String address, List<OrderItemRequestDTO> itemsDto){
@@ -97,11 +94,7 @@ public class OrderServiceImpl implements IOrderService {
 
         itemsDto.forEach(dto->{
             Product product = getProductOrThrow(dto.productId());
-            if (product.getStock() < dto.quantity()) {
-                throw new BadRequestException("Not enough stock for: " + product.getName());
-            }
-
-            product.setStock(product.getStock()-dto.quantity());
+            product.decreaseStock(dto.quantity());
 
             OrderItem item = new OrderItem(product,dto.quantity(),product.getPrice());
             order.addItem(item);

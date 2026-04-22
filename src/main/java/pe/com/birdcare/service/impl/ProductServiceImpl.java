@@ -21,7 +21,6 @@ import pe.com.birdcare.service.IProductService;
 public class ProductServiceImpl implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-
     private final ProductMapper pm;
 
     @Override
@@ -36,12 +35,12 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public ProductResponseDTO findById(Long id) {
-        return productRepository.findById(id).map(pm::toResponse).orElseThrow(()->new ResourceNotFoundException("Product not found with id: "+id));
+        return pm.toResponse(getProductOrThrow(id));
     }
 
     @Override
     public Page<ProductResponseDTO> findByName(String name, Pageable pageable) {
-        return productRepository.findAllByNameContainingIgnoreCase(name,pageable).map(pm::toResponse);
+        return productRepository.findAllByNameContainingIgnoreCase(name, pageable).map(pm::toResponse);
     }
 
     @Override
@@ -52,12 +51,8 @@ public class ProductServiceImpl implements IProductService {
     @Transactional
     @Override
     public ProductResponseDTO create(ProductRequestDTO req) {
-        Category existingCategory = getCategoryOrThrow(req.categoryId());
-
-        Product product = pm.toEntity(req);
-
-        product.setCategory(existingCategory);
-
+        Category category = getCategoryOrThrow(req.categoryId());
+        Product product = Product.create(req.name(), req.description(), req.price(), req.stock(), category);
         return pm.toResponse(productRepository.save(product));
     }
 
@@ -65,12 +60,8 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO update(Long id, ProductRequestDTO req) {
         Product existingProduct = getProductOrThrow(id);
-        pm.updateProduct(req,existingProduct);
-
-        Category existingCategory= getCategoryOrThrow(req.categoryId());
-
-        existingProduct.setCategory(existingCategory);
-
+        Category category = getCategoryOrThrow(req.categoryId());
+        existingProduct.updateDetails(req.name(), req.description(), req.price(), category);
         return pm.toResponse(productRepository.save(existingProduct));
     }
 
@@ -78,7 +69,7 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public void delete(Long id) {
         Product product = getProductOrThrow(id);
-        product.setActive(false);
+        product.disable();
         productRepository.save(product);
     }
 
@@ -86,17 +77,17 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO enable(Long id) {
         Product product = getProductOrThrow(id);
-        product.setActive(true);
-
+        product.enable();
         return pm.toResponse(productRepository.save(product));
     }
 
     private Category getCategoryOrThrow(Long id){
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
     }
+
     private Product getProductOrThrow(Long id){
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 }
