@@ -48,8 +48,9 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<CategoryResponseDTO> delete(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.delete(id));
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        categoryService.delete(id);
     }
 
     @PatchMapping("/{id}/enable")

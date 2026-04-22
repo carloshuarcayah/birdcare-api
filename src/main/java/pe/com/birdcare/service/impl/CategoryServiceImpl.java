@@ -71,10 +71,10 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Transactional
     @Override
-    public CategoryResponseDTO delete(Long id) {
+    public void delete(Long id) {
         Category existingCategory = getCategoryOrThrow(id);
         existingCategory.disable();
-        return mapper.toResponse(categoryRepository.save(existingCategory));
+        categoryRepository.save(existingCategory);
     }
 
     @Transactional

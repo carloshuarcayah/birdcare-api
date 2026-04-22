@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import pe.com.birdcare.dto.ProductRequestDTO;
 import pe.com.birdcare.dto.ProductResponseDTO;
@@ -59,7 +58,7 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/enable")
+    @PatchMapping("/{id}/enable")
     public ResponseEntity<ProductResponseDTO> enable(@PathVariable Long id) {
         return ResponseEntity.ok(productService.enable(id));
     }

@@ -9,10 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import pe.com.birdcare.dto.AdminOrderRequestDTO;
 import pe.com.birdcare.dto.OrderRequestDTO;
 import pe.com.birdcare.dto.OrderResponseDTO;
-import pe.com.birdcare.enums.OrderStatus;
 import pe.com.birdcare.service.IOrderService;
 
 @RestController
@@ -26,7 +24,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findMyOrders(userDetails.getUsername(), pageable));
     }
 
-    @PostMapping("/orders")
+    @PostMapping
     public ResponseEntity<OrderResponseDTO> create(@AuthenticationPrincipal UserDetails userDetails,@Valid @RequestBody OrderRequestDTO req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createMyOrder(userDetails.getUsername(),req));
     }

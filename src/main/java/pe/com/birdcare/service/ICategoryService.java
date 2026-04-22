@@ -9,7 +9,7 @@ import pe.com.birdcare.entity.Category;
 public interface ICategoryService {
     //ADMIN
     Page<CategoryResponseDTO> findAll(Pageable pageable);
-    CategoryResponseDTO delete(Long id);
+    void delete(Long id);
     CategoryResponseDTO enable(Long id);
     CategoryResponseDTO create (CategoryRequestDTO req);
     CategoryResponseDTO update (Long id,CategoryRequestDTO req);
