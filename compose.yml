@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    container_name: birdcare-api
+    restart: unless-stopped
+    environment:
+      DATASOURCE_URL:  ${DATASOURCE_URL:?DATASOURCE_URL is required in .env}
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-birdcare_user}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in .env}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      HIBERNATE_DDL: ${HIBERNATE_DDL:-update}
+    ports:
+      - '8080:8080'

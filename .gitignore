@@ -5,6 +5,9 @@ target/
 !**/src/test/**/target/
 **/src/main/resources/variables.properties
 
+### Secrets ###
+.env
+
 ### STS ###
 .apt_generated
 .classpath
