@@ -3,12 +3,12 @@ package pe.com.birdcare.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.com.birdcare.dto.*;
 import pe.com.birdcare.entity.User;
+import pe.com.birdcare.exception.ConflictException;
 import pe.com.birdcare.exception.ResourceNotFoundException;
 import pe.com.birdcare.mapper.UserMapper;
 import pe.com.birdcare.repository.UserRepository;
@@ -34,15 +34,12 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponseDTO findById(Long id) {
-        User existingUser = getUserOrThrow(id);
-
-        return userMapper.response(existingUser);
+        return userMapper.response(getUserOrThrow(id));
     }
 
     @Override
     public UserResponseDTO findMe(String email) {
-        User user = getUserByEmailOrThrow(email);
-        return userMapper.response(user);
+        return userMapper.response(getUserByEmailOrThrow(email));
     }
 
     @Override
@@ -51,14 +48,14 @@ public class UserServiceImpl implements IUserService {
                 .map(userMapper::response);
     }
 
-
     @Transactional
     @Override
     public UserResponseDTO create(UserCreateDTO obj) {
-        User user = userMapper.createUser(obj);
-        String encryptedPassword = passwordEncoder.encode(obj.password());
-        user.setPassword(encryptedPassword);
-
+        if (userRepository.existsByEmail(obj.email())) {
+            throw new ConflictException("Email already registered: " + obj.email());
+        }
+        String encoded = passwordEncoder.encode(obj.password());
+        User user = User.registerCustomer(obj.email(), encoded, obj.name(), obj.lastName(), obj.phone());
         return userMapper.response(userRepository.save(user));
     }
 
@@ -66,7 +63,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserResponseDTO update(UserUpdateDTO obj, String email) {
         User existingUser = getUserByEmailOrThrow(email);
-        userMapper.updateUser(obj,existingUser);
+        existingUser.updateInfo(obj.name(), obj.lastName(), obj.phone());
         return userMapper.response(userRepository.save(existingUser));
     }
 
@@ -74,7 +71,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void disable(Long id) {
         User existingUser = getUserOrThrow(id);
-        existingUser.setActive(false);
+        existingUser.disable();
         userRepository.save(existingUser);
     }
 
@@ -82,36 +79,23 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void enable(Long id) {
         User existingUser = getUserOrThrow(id);
-        existingUser.setActive(true);
+        existingUser.enable();
         userRepository.save(existingUser);
     }
 
-    //ADMIN
     @Transactional
     @Override
     public void resetPassword(Long id, AdminPasswordResetDTO req) {
         User existingUser = getUserOrThrow(id);
-
-        String encodedPassword = passwordEncoder.encode(req.newPassword());
-
-        existingUser.setPassword(encodedPassword);
-
+        existingUser.resetPassword(req.newPassword(), passwordEncoder);
         userRepository.save(existingUser);
     }
 
-    //user
     @Transactional
     @Override
     public void changePassword(String email, UserPasswordChangeDTO req) {
         User existingUser = getUserByEmailOrThrow(email);
-
-        if(!passwordEncoder.matches(req.oldPassword(), existingUser.getPassword()))
-            throw new BadCredentialsException("Invalid credentials");
-
-        String encodedPassword = passwordEncoder.encode(req.newPassword());
-
-        existingUser.setPassword(encodedPassword);
-
+        existingUser.changePassword(req.oldPassword(), req.newPassword(), passwordEncoder);
         userRepository.save(existingUser);
     }
 
@@ -121,6 +105,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     private User getUserByEmailOrThrow(String email){
-        return  userRepository.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with email: "+email));
+        return userRepository.findByEmail(email)
+                .orElseThrow(()-> new ResourceNotFoundException("User not found with email: "+email));
     }
 }
