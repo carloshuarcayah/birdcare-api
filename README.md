@@ -23,7 +23,7 @@ Necesitas **una** de las dos opciones:
 ```bash
 cp .env.example .env
 # edita .env y pon un JWT_SECRET real:
-#   openssl rand -base64 64
+# use openssl rand -base64 64 para generar contraseña
 docker compose up --build
 ```
 
